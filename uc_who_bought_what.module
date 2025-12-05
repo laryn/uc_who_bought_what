@@ -365,26 +365,24 @@ function uc_who_bought_what_form($form, $form_state) {
 
   global $user;
 
-  $listquery = "SELECT DISTINCT({uc_products}.nid) AS nid, {node}.title AS title, {uc_product_classes}.name AS type, {node}.status as status
-    FROM {uc_products}
-    INNER JOIN {node} ON {uc_products}.nid = {node}.nid
-    LEFT JOIN {uc_product_classes} ON {uc_product_classes}.pcid = {node}.type";
-  //		WHERE status = status";
+  $listquery = "SELECT DISTINCT({uc_products}.nid) AS nid,
+  {node}.title AS title,
+  {uc_product_classes}.name AS type,
+  {node}.status as status
+  FROM {uc_products}
+  INNER JOIN {node} ON {uc_products}.nid = {node}.nid
+  LEFT JOIN {uc_product_classes} ON {uc_product_classes}.pcid = {node}.type";
 
-  if (user_access('view all who bought what')) {
-    // Do nothing. see all.
-    $listquery .= '';
-  }
-  else {
-    if (user_access('view own who bought what')) {
-      $listquery .= " WHERE {node}.uid = :uid";
-    }
+  $params = array();
+  if (!user_access('view all who bought what') && user_access('view own who bought what')) {
+    $listquery .= " WHERE {node}.uid = :uid";
+    $params[':uid'] = $user->uid;
     backdrop_set_message("Only displaying reports for items posted by $user->name.");
   }
 
-  $listquery .=  " ORDER BY {uc_product_classes}.name, {node}.title";
+  $listquery .= " ORDER BY {uc_product_classes}.name, {node}.title";
 
-  $products = db_query($listquery, array(':uid' => $user->uid));
+  $products = db_query($listquery, $params);
 
   $product_list[0] = t('Select an item...');
 
